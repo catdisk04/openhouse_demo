@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Canvas Fingerprinting and User Greeting{% endblock %}
+
+{% block content %}
+
+
+<h1>Canvas Fingerprinting and User Greeting</h1>
+
+<p id="greetingMessage"></p>
+<canvas id="canvas" width="200" height="20"></canvas>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+<script>
+    function generateMD5(data) {
+        var hash = CryptoJS.MD5(data).toString();
+        return hash;
+    }
+
+    function generateFingerprintAndStore() {
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        var txt = "BrowserLeaks,com <canvas> 1.0";
+
+        ctx.textBaseline = "top";
+        ctx.font = "14px 'Arial'";
+        ctx.textBaseline = "alphabetic";
+
+        ctx.fillStyle = "#f60";
+        ctx.fillRect(125, 1, 62, 20);
+
+        ctx.fillStyle = "#069";
+        ctx.fillText(txt, 2, 15);
+
+        ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
+        ctx.fillText(txt, 4, 17);
+
+        var dataURL = canvas.toDataURL();
+        var md5Hash = generateMD5(dataURL);
+
+        // Store the name and corresponding hash in local storage
+
+        document.getElementById('id_hash').value = md5Hash; // Hide input section
+
+    }
+
+    // Check if the user already exists when the page loads
+    window.onload = function() {
+        var keys = Object.keys(localStorage);
+        for (var i = 0; i < keys.length; i++) {
+            if (keys[i].length === 32) { // Assuming MD5 hash length is 32 characters
+                var name = localStorage.getItem(keys[i]);
+                document.getElementById('userInputSection').style.display = 'none'; // Hide input section
+                document.getElementById('greetingMessage').innerText = "Welcome back, " + name + "!";
+                break; // Exit the loop once a match is found
+            }
+        }
+        generateFingerprintAndStore();
+        
+    };
+</script>
+{% endblock %}
+
+{% block form %} 
+<form method="post" action="/demo/" >
+    {% csrf_token %}
+    <label for="nameInput">Enter Your Name:</label>
+    {{ form.name}}
+    {{ form.hash.as_hidden }}
+    <button type="submit" name="save">Submit</button>
+</form>
+{% endblock form %}
